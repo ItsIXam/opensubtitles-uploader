@@ -6,15 +6,16 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import path from 'path'
 import { exec, spawn} from 'child_process'
-import pkJson from './package.json' assert { type: "json" };
 import { clean } from 'clean-modules';
 import { getPlatform, getArchitecture } from './app/js/vendor/system.js'
-
-'use strict';
+import { createRequire } from "module";
 
 /******** 
  * setup *
  ********/
+const require = createRequire(import.meta.url);
+const pkJson = require("./package.json");
+
 const nwVersion = '0.106.1',
     flavor = 'sdk',
     availablePlatforms = ['linux', 'win', 'osx'],
