@@ -15,11 +15,10 @@ import { getPlatform, getArchitecture } from './app/js/vendor/system.js'
 /******** 
  * setup *
  ********/
-const nwVersion = '0.76.0',
+const nwVersion = '0.106.1',
     flavor = 'sdk',
     availablePlatforms = ['linux', 'win', 'osx'],
     releasesDir = 'build';
-
 
 const argv = yargs(hideBin(process.argv)).parse();
 const currentPlatform = () => { return getPlatform(process.platform) };
@@ -70,9 +69,9 @@ gulp.task('run', () => {
         )
       );
     }
-
+    // Based on platform, create path to nw in bin
     let platform = platforms[0];
-    let bin = path.join('cache', `${nwVersion}-${flavor}`, platform);
+    let bin = path.join('cache', `nwjs-${flavor}-v${nwVersion}-${currentPlatform()}-${currentArchitecture()}`);
 
     switch (platform.slice(0, 3)) {
       case 'osx':
@@ -149,33 +148,39 @@ gulp.task('default', () => {
 // download and compile nwjs
 gulp.task('nwjs', async () => {
     const nwOptions = {
-        srcDir: ['./app/**', './package.json', './README.md', './node_modules/**'],
-        outDir: releasesDir,
-        app: pkJson.name,
+        srcDir: "./app/** package.json ./README.md ./node_modules/**", 
+        outDir: path.join(releasesDir, pkJson.name, currentPlatform()),
+        cacheDir: "./cache",
+        app: {
+        name: pkJson.name,
+        icon: pkJson.icon,
+        company: pkJson.author.name,
+        fileDescription: pkJson.description,
+        productName: pkJson.releaseName,
+        legalCopyright: pkJson.license,
+        },
+        version: "stable",
         zip: false,
-        version: nwVersion,
         flavor: flavor,
         mode: "build",
         platform: currentPlatform(),
         arch: currentArchitecture(),
     };
-
-    // windows-only (or wine): replace icon & VersionInfo1.res
-    if (currentPlatform().indexOf('win') !== -1) {
-        nwOptions.app = {
-            icon: pkJson.icon,
-            comments: pkJson.description,
-            company: pkJson.homepage,
-            fileDescription: pkJson.releaseName,
-            fileVersion: pkJson.version,
-            internalName: pkJson.name,
-            originalFilename: pkJson.name + '.exe',
-            productName: pkJson.releaseName,
-            productVersion: pkJson.version
-        };
-    }
-
-    return () => nwbuild(nwOptions).on('log', console.log);
+    // // windows-only (or wine): replace icon & VersionInfo1.res
+    // if (currentPlatform().indexOf('win') !== -1) {
+    //     nwOptions.app = {
+    //         icon: pkJson.icon,
+    //         comments: pkJson.description,
+    //         company: pkJson.homepage,
+    //         fileDescription: pkJson.releaseName,
+    //         fileVersion: pkJson.version,
+    //         internalName: pkJson.name,
+    //         originalFilename: pkJson.name + '.exe',
+    //         productName: pkJson.releaseName,
+    //         productVersion: pkJson.version
+    //     };
+    // }
+  await nwbuild(nwOptions);
 });
 
 // compile nsis installer
@@ -368,10 +373,9 @@ gulp.task('clean:mediainfo', () => {
         console.log('clean:mediainfo', platform);
         const sources = path.join(releasesDir, pkJson.name, platform);
         return deleteAsync([
-            platform !== 'win32' ? path.join(sources, 'node_modules/mediainfo-wrapper/lib/win32') : '',
-            platform !== 'osx64' ? path.join(sources, 'node_modules/mediainfo-wrapper/lib/osx64') : '',
-            platform !== 'linux32' ? path.join(sources, 'node_modules/mediainfo-wrapper/lib/linux32') : '',
-            platform !== 'linux64' ? path.join(sources, 'node_modules/mediainfo-wrapper/lib/linux64') : '',
+            platform !== 'win' ? path.join(sources, 'node_modules/mediainfo-wrapper/lib/win32') : '',
+            platform !== 'osx' ? path.join(sources, 'node_modules/mediainfo-wrapper/lib/osx64') : '',
+            platform !== 'linux' ? path.join(sources, 'node_modules/mediainfo-wrapper/lib/linux32') : '',
             path.join(sources, pkJson.name + '.app/Contents/Resources/app.nw/node_modules/mediainfo-wrapper/lib/win32'),  
             path.join(sources, pkJson.name + '.app/Contents/Resources/app.nw/node_modules/mediainfo-wrapper/lib/linux32'),  
             path.join(sources, pkJson.name + '.app/Contents/Resources/app.nw/node_modules/mediainfo-wrapper/lib/linux64'),  
@@ -387,7 +391,7 @@ gulp.task('npm:clean_modules', () => {
       const removedCount =
         (Array.isArray(r?.removedFiles) ? r.removedFiles.length : 0) +
         (Array.isArray(r?.removedDirectories) ? r.removedDirectories.length : 0) +
-        (Array.isArray(r?.removedEmptyDirectories) ? r.removedEmptyDirectories.length : 0) +
+        (Array.isArray(r?.removedEmptyDirs) ? r.removedEmptyDirs.length : 0) +
         (Array.isArray(r?.removed) ? r.removed.length : 0);
 
       console.log('Clean Modules: %s files/folders removed', removedCount);
