@@ -8,14 +8,11 @@ import path from 'path'
 import { exec, spawn} from 'child_process'
 import { clean } from 'clean-modules';
 import { getPlatform, getArchitecture } from './app/js/vendor/system.js'
-import { createRequire } from "module";
+import pkJson from './package.json' with { type: 'json' };
 
 /******** 
  * setup *
  ********/
-const require = createRequire(import.meta.url);
-const pkJson = require("./package.json");
-
 const nwVersion = '0.106.1',
     flavor = 'sdk',
     availablePlatforms = ['linux', 'win', 'osx'],
