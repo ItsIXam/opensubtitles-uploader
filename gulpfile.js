@@ -8,7 +8,7 @@ import path from 'path'
 import { exec, spawn} from 'child_process'
 import pkJson from './package.json' assert { type: "json" };
 import { clean } from 'clean-modules';
-import getPlatform from './app/js/vendor/platform.js'
+import { getPlatform, getArchitecture } from './app/js/vendor/system.js'
 
 'use strict';
 
@@ -17,12 +17,13 @@ import getPlatform from './app/js/vendor/platform.js'
  ********/
 const nwVersion = '0.76.0',
     flavor = 'sdk',
-    availablePlatforms = ['linux32', 'linux64', 'win32', 'osx64'],
+    availablePlatforms = ['linux', 'win', 'osx'],
     releasesDir = 'build';
 
 
 const argv = yargs(hideBin(process.argv)).parse();
 const currentPlatform = () => { return getPlatform(process.platform) };
+const currentArchitecture = () => { return getArchitecture(process.arch)}
 
 /***********
  *  custom  *
@@ -156,7 +157,7 @@ gulp.task('nwjs', async () => {
         flavor: flavor,
         mode: "build",
         platform: currentPlatform(),
-        arch: "x64",
+        arch: currentArchitecture(),
     };
 
     // windows-only (or wine): replace icon & VersionInfo1.res
